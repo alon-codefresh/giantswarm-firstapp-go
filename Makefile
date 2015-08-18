@@ -37,15 +37,19 @@ currentweather: $(GO_SOURCE)
 docker-build: currentweather
 	docker build -t registry.giantswarm.io/$(GIANTSWARM_USERNAME)/currentweather-go .
 
+# Building your custom redis image
+docker-build-redis:
+	docker build -t registry.giantswarm.io/$(GIANTSWARM_USERNAME)/redis -f Dockerfile-redis .
+
 # Starting redis container to run in the background
 docker-run-redis:
 	@docker kill currentweather-redis-container > /dev/null || true
 	@docker rm currentweather-redis-container > /dev/null || true
-	docker run -d --name currentweather-redis-container redis
+	docker run -d --name currentweather-redis-container -v /tmp registry.giantswarm.io/$(GIANTSWARM_USERNAME)/redis
 
 # Running your custom-built docker image locally
 docker-run:
-	docker run --link currentweather-redis-container:redis -p 8080:8080 \
+	docker run --volumes-from currentweather-redis-container -p 8080:8080 \
 		-ti --rm --name currentweather-go-container \
 		registry.giantswarm.io/$(GIANTSWARM_USERNAME)/currentweather-go
 
