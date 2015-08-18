@@ -2,21 +2,28 @@
   "name": "currentweather",
   "components": {
     "webserver": {
+        "pod": "children"
+    },
+    "webserver/backend": {
       "image": "registry.giantswarm.io/$GIANTSWARM_LOGIN_NAME/currentweather-go:latest",
       "ports": [8080],
-      "links": [
-        {
-          "component": "redis",
-          "target_port": 6379
-        }
-      ],
       "domains": {
         "8080": "currentweather-$GIANTSWARM_LOGIN_NAME.gigantic.io"
-      }
+      },
+      "volumes": [
+        {
+          "volumes-from": "webserver/redis"
+        }
+      ]
     },
-    "redis": {
-      "image": "redis:latest",
-      "ports": [6379]
+    "webserver/redis": {
+      "image": "registry.giantswarm.io/$GIANTSWARM_LOGIN_NAME/redis:latest",
+       "volumes": [
+        {
+          "path": "/tmp",
+          "size": "1 GB"
+        }
+      ]
     }
   }
 }
