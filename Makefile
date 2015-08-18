@@ -56,6 +56,7 @@ docker-run:
 # Pushing the freshly built image to the registry
 docker-push:
 	docker push registry.giantswarm.io/$(GIANTSWARM_USERNAME)/currentweather-go
+	docker push registry.giantswarm.io/$(GIANTSWARM_USERNAME)/redis
 
 # Starting your service on Giant Swarm.
 # Requires prior pushing to the registry ('make docker-push')
