@@ -11,7 +11,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/garyburd/redigo/redis"
 )
@@ -35,13 +34,9 @@ func main() {
 	var err error
 	log.Println("Establishing connection to Redis")
 
-	for redisCon == nil {
-		redisCon, err = redis.Dial("unix", "/tmp/redis.sock")
-		if err != nil {
-			log.Printf("Could not connect to Redis with error: %s\n", err)
-			time.Sleep(1 * time.Second)
-			log.Println("Trying again")
-		}
+	redisCon, err = redis.Dial("unix", "/tmp/redis.sock")
+	if err != nil {
+		log.Fatalf("Could not connect to Redis with error: %s\n", err)
 	}
 	defer redisCon.Close()
 
