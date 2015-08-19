@@ -6,6 +6,9 @@ Check out the full tutorial here:
 
 https://docs.giantswarm.io/guides/your-first-service/golang/
 
+> Note:
+This branch also uses pods and unix domain sockets. See below for details.
+
 ## Prerequisites
 
 * Have a Giant Swarm account and the [swarm CLI](https://docs.giantswarm.io/reference/cli/) running. [Request a free invite](https://giantswarm.io/).
@@ -61,3 +64,18 @@ For further documentation and guides see the [docs](https://docs.giantswarm.io/)
 * [Python](https://github.com/giantswarm/giantswarm-firstapp-python)
 * [PHP](https://github.com/giantswarm/giantswarm-firstapp-php)
 * [Java](https://github.com/giantswarm/giantswarm-firstapp-java)
+
+
+## Pods and Unix Domain Sockets 
+The original implementation was communication via TCP sockets. For a typical microservice TCP or even HTTP is appropriate. Especially if the two communication endpoints are on different servers. If we take a closer look on our example we see that the redis is really a cache which usually should be close to the application. If we put the cache on the same machine we can use more performant communication channels like unix domain sockets.
+
+TODO
+  * motivate pods
+  * motivate uds
+  * explain pods
+  * explain uds
+  * explain workarounds
+
+
+
+
