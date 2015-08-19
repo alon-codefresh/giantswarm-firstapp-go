@@ -36,9 +36,6 @@ currentweather: $(GO_SOURCE)
 # Building your custom docker image
 docker-build: currentweather
 	docker build -t registry.giantswarm.io/$(GIANTSWARM_USERNAME)/currentweather-go .
-
-# Building your custom redis image
-docker-build-redis:
 	docker build -t registry.giantswarm.io/$(GIANTSWARM_USERNAME)/redis -f Dockerfile-redis .
 
 # Starting redis container to run in the background
