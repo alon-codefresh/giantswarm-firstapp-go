@@ -48,7 +48,7 @@ docker-run-redis:
 docker-run:
 	docker run --volumes-from currentweather-redis-container -p 8080:8080 \
 		-ti --rm --name currentweather-go-container \
-		registry.giantswarm.io/$(GIANTSWARM_USERNAME)/currentweather-go
+		registry.giantswarm.io/$(GIANTSWARM_USERNAME)/currentweather-go /tmp/redis.sock
 
 # Pushing the freshly built image to the registry
 docker-push:

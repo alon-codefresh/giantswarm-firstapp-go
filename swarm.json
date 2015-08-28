@@ -10,6 +10,7 @@
       "domains": {
         "8080": "currentweather-$GIANTSWARM_LOGIN_NAME.gigantic.io"
       },
+      "args": ["/tmp/redis.sock"],
       "volumes": [
         {
           "volumes-from": "webserver/redis"

@@ -31,9 +31,14 @@ type WeatherReport struct {
 }
 
 func main() {
+	if len(os.Args) != 2 {
+		log.Fatalf("Please specify the redis socket to connect to.")
+	}
+	socket := os.Args[1]
+
 	var err error
-	log.Println("Establishing connection to Redis")
-	redisCon, err = redis.Dial("unix", "/tmp/redis.sock")
+	log.Printf("Establishing connection to Redis %v\n", socket)
+	redisCon, err = redis.Dial("unix", socket)
 	if err != nil {
 		log.Fatalf("Could not connect to Redis with error: %s", err)
 	}
