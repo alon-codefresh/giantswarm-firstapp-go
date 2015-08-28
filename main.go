@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/md5"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -31,14 +32,15 @@ type WeatherReport struct {
 }
 
 func main() {
-	if len(os.Args) != 2 {
+	socketPtr := flag.String("socket", "", "the redis unix socket")
+	flag.Parse()
+	if *socketPtr == "" {
 		log.Fatalf("Please specify the redis socket to connect to.")
 	}
-	socket := os.Args[1]
 
 	var err error
-	log.Printf("Establishing connection to Redis %v\n", socket)
-	redisCon, err = redis.Dial("unix", socket)
+	log.Printf("Establishing connection to Redis %v\n", *socketPtr)
+	redisCon, err = redis.Dial("unix", *socketPtr)
 	if err != nil {
 		log.Fatalf("Could not connect to Redis with error: %s", err)
 	}
