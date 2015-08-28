@@ -36,13 +36,13 @@ currentweather: $(GO_SOURCE)
 # Building your custom docker image
 docker-build: currentweather
 	docker build -t registry.giantswarm.io/$(GIANTSWARM_USERNAME)/currentweather-go .
-	docker build -t registry.giantswarm.io/$(GIANTSWARM_USERNAME)/redis -f Dockerfile-redis .
+	docker build -t registry.giantswarm.io/$(GIANTSWARM_USERNAME)/redis-unixsocket -f Dockerfile-redis .
 
 # Starting redis container to run in the background
 docker-run-redis:
 	@docker kill currentweather-redis-container > /dev/null || true
 	@docker rm currentweather-redis-container > /dev/null || true
-	docker run -d --name currentweather-redis-container -v /tmp registry.giantswarm.io/$(GIANTSWARM_USERNAME)/redis
+	docker run -d --name currentweather-redis-container -v /tmp registry.giantswarm.io/$(GIANTSWARM_USERNAME)/redis-unixsocket
 
 # Running your custom-built docker image locally
 docker-run:
@@ -53,7 +53,7 @@ docker-run:
 # Pushing the freshly built image to the registry
 docker-push:
 	docker push registry.giantswarm.io/$(GIANTSWARM_USERNAME)/currentweather-go
-	docker push registry.giantswarm.io/$(GIANTSWARM_USERNAME)/redis
+	docker push registry.giantswarm.io/$(GIANTSWARM_USERNAME)/redis-unixsocket
 
 # Starting your service on Giant Swarm.
 # Requires prior pushing to the registry ('make docker-push')

@@ -18,7 +18,7 @@
       ]
     },
     "webserver/redis": {
-      "image": "registry.giantswarm.io/$GIANTSWARM_LOGIN_NAME/redis:latest",
+      "image": "registry.giantswarm.io/$GIANTSWARM_LOGIN_NAME/redis-unixsocket:latest",
        "volumes": [
         {
           "path": "/tmp",
