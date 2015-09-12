@@ -12,11 +12,12 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/garyburd/redigo/redis"
 )
 
-var redisCon redis.Conn
+var pool *redis.Pool
 
 const KelvinToCelsiusDiff = 273
 
@@ -34,11 +35,11 @@ type WeatherReport struct {
 func main() {
 	var err error
 	log.Println("Establishing connection to Redis")
-	redisCon, err = redis.Dial("tcp", redisAddress())
+	pool = newPool()
+
 	if err != nil {
 		log.Fatalf("Could not connect to Redis with error: %s", err)
 	}
-	defer redisCon.Close()
 
 	http.HandleFunc("/", currentWeatherHandler)
 
@@ -63,6 +64,7 @@ func currentWeatherHandler(w http.ResponseWriter, r *http.Request) {
 		celsius := report.Main.Temperature - KelvinToCelsiusDiff
 		fmt.Fprintf(w, "Current temperature in %v (%v) is %.1f °C\n", report.Name, report.Sys.Country, celsius)
 	}
+
 }
 
 func getWeatherReport(query string) (WeatherReport, error) {
@@ -102,19 +104,47 @@ func getWeatherReportData(query string) ([]byte, error) {
 
 func cacheReport(f func(string) ([]byte, error), param string) ([]byte, error) {
 	key := fmt.Sprintf("report_%x", md5.Sum([]byte(param)))
-	data, _ := redis.Bytes(redisCon.Do("GET", key))
+
+	redisCon := pool.Get()
+	defer redisCon.Close()
+
+	data, _ := redis.Bytes(redisCon.Do("GET", key)) // err is a cache miss
+
 	if len(data) == 0 {
-		log.Println("Querying live weather data")
+		start := time.Now()
 		res, err := f(param)
+		log.Printf("Queried live weather data in %s\n", time.Since(start))
 		if err != nil {
 			return nil, err
 		}
-		redisCon.Do("SETEX", key, 60, res)
+
+		reply, err := redisCon.Do("SETEX", key, 30, res)
+		if reply != nil {
+			log.Printf("redisCon.Do(SETEX) reply: %s\n", reply)
+		}
+		if err != nil {
+			return data, err
+		}
+
 		data = res
 	} else {
 		log.Println("Using cached weather data")
 	}
 	return data, nil
+}
+
+func newPool() *redis.Pool {
+	return &redis.Pool{
+		MaxIdle:     3,
+		IdleTimeout: 240 * time.Second,
+		Dial: func() (redis.Conn, error) {
+			c, err := redis.Dial("tcp", redisAddress())
+			if err != nil {
+				return nil, err
+			}
+			return c, err
+		},
+	}
 }
 
 func redisAddress() string {
