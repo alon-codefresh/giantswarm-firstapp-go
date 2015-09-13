@@ -67,22 +67,7 @@ func currentWeatherHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func getWeatherReport(query string) (WeatherReport, error) {
-	var report WeatherReport
-
-	data, err := cacheReport(getWeatherReportData, query)
-	if err != nil {
-		return report, err
-	}
-
-	if err = json.Unmarshal(data, &report); err != nil {
-		return report, err
-	}
-
-	return report, nil
-}
-
-func getWeatherReportData(query string) ([]byte, error) {
+func getLiveWeatherReport(query string) ([]byte, error) {
 	var data []byte
 
 	if query == "" {
@@ -102,9 +87,10 @@ func getWeatherReportData(query string) ([]byte, error) {
 	return data, nil
 }
 
-func cacheReport(f func(string) ([]byte, error), param string) ([]byte, error) {
-	key := fmt.Sprintf("report_%x", md5.Sum([]byte(param)))
+func getWeatherReport(param string) (WeatherReport, error) {
+	var report WeatherReport
 
+	key := fmt.Sprintf("report_%x", md5.Sum([]byte(param)))
 	redisCon := pool.Get()
 	defer redisCon.Close()
 
@@ -112,25 +98,30 @@ func cacheReport(f func(string) ([]byte, error), param string) ([]byte, error) {
 
 	if len(data) == 0 {
 		start := time.Now()
-		res, err := f(param)
+		res, err := getLiveWeatherReport(param)
 		log.Printf("Queried live weather data in %s\n", time.Since(start))
 		if err != nil {
-			return nil, err
+			return report, err
 		}
 
-		reply, err := redisCon.Do("SETEX", key, 30, res)
+		reply, err := redisCon.Do("SETEX", key, 10, res)
 		if reply != nil {
 			log.Printf("redisCon.Do(SETEX) reply: %s\n", reply)
 		}
 		if err != nil {
-			return data, err
+			return report, err
 		}
 
 		data = res
 	} else {
 		log.Println("Using cached weather data")
 	}
-	return data, nil
+
+	if err := json.Unmarshal(data, &report); err != nil {
+		return report, err
+	}
+
+	return report, nil
 }
 
 func newPool() *redis.Pool {
