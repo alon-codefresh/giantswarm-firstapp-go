@@ -19,6 +19,8 @@ import (
 
 var pool *redis.Pool
 
+var c chan int
+
 const KelvinToCelsiusDiff = 273
 
 type WeatherReport struct {
@@ -41,6 +43,9 @@ func main() {
 		log.Fatalf("Could not connect to Redis with error: %s", err)
 	}
 
+	c = make(chan int, 1)
+	c <- 0
+
 	http.HandleFunc("/", currentWeatherHandler)
 
 	go func() {
@@ -55,7 +60,7 @@ func main() {
 }
 
 func currentWeatherHandler(w http.ResponseWriter, r *http.Request) {
-	report, err := getWeatherReport(r.URL.Query().Get("q"))
+	report, err := getWeatherReport(r.URL.Query().Get("q"), c)
 	if err != nil {
 		fmt.Fprintf(w, "Cannot get weather data: %s\n", err)
 	} else if len(report.Error) > 1 {
@@ -74,7 +79,10 @@ func getLiveWeatherReport(query string) ([]byte, error) {
 		query = "Cologne,DE"
 	}
 
+	start := time.Now()
 	resp, err := http.Get("http://api.openweathermap.org/data/2.5/weather?q=" + url.QueryEscape(query))
+	log.Printf("Queried live weather data in %s\n", time.Since(start))
+
 	if err != nil {
 		return data, err
 	}
@@ -87,7 +95,7 @@ func getLiveWeatherReport(query string) ([]byte, error) {
 	return data, nil
 }
 
-func getWeatherReport(param string) (WeatherReport, error) {
+func getWeatherReport(param string, c chan int) (WeatherReport, error) {
 	var report WeatherReport
 
 	key := fmt.Sprintf("report_%x", md5.Sum([]byte(param)))
@@ -97,22 +105,26 @@ func getWeatherReport(param string) (WeatherReport, error) {
 	data, _ := redis.Bytes(redisCon.Do("GET", key)) // err is a cache miss
 
 	if len(data) == 0 {
-		start := time.Now()
-		res, err := getLiveWeatherReport(param)
-		log.Printf("Queried live weather data in %s\n", time.Since(start))
-		if err != nil {
-			return report, err
+		x := <-c
+		if x > 0 { //someone is filling the cache
+			// write value back to the channel and skip
+			c <- x
+		} else { // no one is filling the cache
+			c <- 1 // indicate that I will so
+			log.Println("I'm filling cache.")
+			fillCache(param, key, redisCon)
+			log.Println("Finish filling the cache.")
+			//ignore what is in the channel
+			//indicate with 0 that I'm finished.
+			<-c
+			c <- 0
 		}
 
-		reply, err := redisCon.Do("SETEX", key, 10, res)
-		if reply != nil {
-			log.Printf("redisCon.Do(SETEX) reply: %s\n", reply)
+		//TODO synchronizse with channel
+		for len(data) == 0 {
+			data, _ = redis.Bytes(redisCon.Do("GET", key))
+			time.Sleep(time.Second * 1)
 		}
-		if err != nil {
-			return report, err
-		}
-
-		data = res
 	} else {
 		log.Println("Using cached weather data")
 	}
@@ -122,6 +134,18 @@ func getWeatherReport(param string) (WeatherReport, error) {
 	}
 
 	return report, nil
+}
+
+func fillCache(param string, key string, redisCon redis.Conn) error {
+	res, err := getLiveWeatherReport(param)
+	if err != nil {
+		return err
+	}
+	_, err = redisCon.Do("SETEX", key, 10, res)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func newPool() *redis.Pool {
