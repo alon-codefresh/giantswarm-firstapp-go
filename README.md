@@ -61,3 +61,7 @@ For further documentation and guides see the [docs](https://docs.giantswarm.io/)
 * [Python](https://github.com/giantswarm/giantswarm-firstapp-python)
 * [PHP](https://github.com/giantswarm/giantswarm-firstapp-php)
 * [Java](https://github.com/giantswarm/giantswarm-firstapp-java)
+
+## Open Weather API
+
+The weather data is provided by http://openweathermap.org
