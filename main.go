@@ -19,6 +19,7 @@ import (
 var redisCon redis.Conn
 
 const KelvinToCelsiusDiff = 273
+const OpenWeatherMapAPIKey = "182564eaf55f709a58a13c40086fb5bb"
 
 type WeatherReport struct {
 	Main struct {
@@ -87,7 +88,9 @@ func getWeatherReportData(query string) ([]byte, error) {
 		query = "Cologne,DE"
 	}
 
-	resp, err := http.Get("http://api.openweathermap.org/data/2.5/weather?q=" + url.QueryEscape(query))
+	url := fmt.Sprintf("http://api.openweathermap.org/data/2.5/weather?q=%v&appid=%v", url.QueryEscape(query), OpenWeatherMapAPIKey)
+
+	resp, err := http.Get(url)
 	if err != nil {
 		return data, err
 	}
