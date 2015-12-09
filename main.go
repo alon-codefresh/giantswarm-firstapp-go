@@ -35,7 +35,7 @@ type WeatherReport struct {
 func main() {
 	var err error
 	log.Println("Establishing connection to Redis")
-	redisCon, err = redis.Dial("tcp", redisAddress())
+	redisCon, err = redis.Dial("tcp", "redis:6379")
 	if err != nil {
 		log.Fatalf("Could not connect to Redis with error: %s", err)
 	}
@@ -118,10 +118,4 @@ func cacheReport(f func(string) ([]byte, error), param string) ([]byte, error) {
 		log.Println("Using cached weather data")
 	}
 	return data, nil
-}
-
-func redisAddress() string {
-	addr := os.Getenv("REDIS_PORT_6379_TCP_ADDR")
-	port := os.Getenv("REDIS_PORT_6379_TCP_PORT")
-	return net.JoinHostPort(addr, port)
 }
