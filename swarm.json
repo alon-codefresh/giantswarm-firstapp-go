@@ -2,7 +2,7 @@
   "name": "currentweather",
   "components": {
     "webserver": {
-      "image": "registry.giantswarm.io/$GIANTSWARM_LOGIN_NAME/currentweather-go:latest",
+      "image": "registry02.giantswarm.io/$GIANTSWARM_LOGIN_NAME/currentweather-go:latest",
       "ports": [8080],
       "links": [
         {
@@ -11,7 +11,7 @@
         }
       ],
       "domains": {
-        "8080": "currentweather-$GIANTSWARM_LOGIN_NAME.gigantic.io"
+        "8080": "currentweather-$GIANTSWARM_LOGIN_NAME.leaseweb-alpha.giantswarm.io"
       }
     },
     "redis": {

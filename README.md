@@ -48,7 +48,7 @@ This
 * creates the service according to the definition in `swarm.json`
 * starts the service
 
-To test it run something like: `curl currentweather-YOURUSERNAME.gigantic.io` and replace YOURUSERNAME with your Giant Swarm username.
+To test it run something like: `curl currentweather-YOURUSERNAME.leaseweb-alpha.giantswarm.io` and replace YOURUSERNAME with your Giant Swarm username.
 
 For all build and deploy details see the [Makefile](Makefile).
 
